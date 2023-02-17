@@ -16,7 +16,7 @@ def closest_neighbour_sp(ref_pts, query_pts):
     return ref_closest_dist_sp.astype(np.float32), ref_closest_index_sp.astype(np.int32), query_closest_dist_sp.astype(np.float32), query_closest_index_sp.astype(np.int32)
 
 
-if __name__ == '__main__':
+def test_main():
 
     np.random.seed(0)
 
@@ -26,20 +26,21 @@ if __name__ == '__main__':
 
     test_iter = 10
 
+    print()
     start_time = time.time()
-    for i in range(test_iter):
-        ref_pts = np.random.randn(ref_nb, 3)
-        query_pts = np.random.randn(query_nb, 3)
+    for _ in range(test_iter):
+        ref_pts = np.random.randn(ref_nb, dim)
+        query_pts = np.random.randn(query_nb, dim)
         closest_neighbour_sp(ref_pts, query_pts)
     print(f"Scipy time: {(time.time() - start_time) / test_iter}")
 
     start_time = time.time()
-    for i in range(test_iter):
+    for _ in range(test_iter):
         ref_pts = np.random.randn(ref_nb, 3)
         query_pts = np.random.randn(query_nb, 3)
         closest_neighbour.compute(np.asfortranarray(
             ref_pts), np.asfortranarray(query_pts))
-    print(f"Cuda time: {(time.time() - start_time) / test_iter}")
+    print(f"CUDA time: {(time.time() - start_time) / test_iter}")
 
     ref_pts = np.random.randn(ref_nb, 3)
     query_pts = np.random.randn(query_nb, 3)
@@ -56,5 +57,5 @@ if __name__ == '__main__':
     closest_dist_valid = np.average((ref_closest_dist_sp - ref_closest_dist_cuda)
                                     ) < 1e-7 and np.average((query_closest_dist_sp - query_closest_dist_cuda)) < 1e-7
 
-    if closest_index_valid and closest_dist_valid:
-        print("Test pass")
+    assert closest_index_valid
+    assert closest_dist_valid
