@@ -1,4 +1,6 @@
 #include <cuda.h>
+#include <pybind11/numpy.h>
+#include <pybind11/pybind11.h>
 #include <stdio.h>
 
 #define BLOCK_DIM 16
@@ -289,4 +291,53 @@ bool closest_cuda(const float *ref, int ref_nb, const float *query,
   free();
 
   return true;
+}
+
+namespace py = pybind11;
+
+py::list compute_closest_neighbour(py::array_t<float> ref_pts,
+                                   py::array_t<float> query_pts) {
+  auto r_ref_pts = ref_pts.unchecked<2>();
+  auto r_query_pts = query_pts.unchecked<2>();
+
+  if (r_ref_pts.shape(1) != r_query_pts.shape(1)) {
+    throw std::runtime_error(
+        "Two point sets shoud have same feature dimension");
+  }
+
+  int ref_nb = r_ref_pts.shape(0);
+  int query_nb = query_pts.shape(0);
+  int dim = r_ref_pts.shape(1);
+
+  float *closest_dist_ref = (float *)malloc(ref_nb * sizeof(float));
+  int *closest_index_ref = (int *)malloc(ref_nb * sizeof(int));
+  float *closest_dist_query = (float *)malloc(query_nb * sizeof(float));
+  int *closest_index_query = (int *)malloc(query_nb * sizeof(int));
+
+  if (!closest_cuda(ref_pts.data(), ref_nb, query_pts.data(), query_nb, dim,
+                    closest_dist_ref, closest_index_ref, closest_dist_query,
+                    closest_index_query)) {
+    throw std::runtime_error("Failed to compute closest neighbour");
+  }
+
+  py::list results_list;
+
+  auto closest_dist_ref_py = py::array_t<float>(ref_nb, closest_dist_ref);
+  auto closest_index_ref_py = py::array_t<int>(ref_nb, closest_index_ref);
+  auto closest_dist_query_py = py::array_t<float>(query_nb, closest_dist_query);
+  auto closest_index_query_py = py::array_t<int>(query_nb, closest_index_query);
+
+  results_list.append(closest_dist_ref_py);
+  results_list.append(closest_index_ref_py);
+  results_list.append(closest_dist_query_py);
+  results_list.append(closest_index_query_py);
+
+  return results_list;
+}
+
+PYBIND11_MODULE(closest_neighbour, m) {
+  m.doc() =
+      "Compute mutual closest neighbour between two point sets using cuda";
+  m.def("compute", &compute_closest_neighbour,
+        "Compute mutual closest point distance and index");
 }

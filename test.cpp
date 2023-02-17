@@ -304,7 +304,7 @@ int main(void) {
 
   // Parameters
   const int ref_nb = 10000;
-  const int query_nb = 2048;
+  const int query_nb = 10000;
   const int dim = 3;
   const int k = 1;
 
@@ -324,10 +324,10 @@ int main(void) {
   // Allocate input points and output k-NN distances / indexes
   float *ref = (float *)malloc(ref_nb * dim * sizeof(float));
   float *query = (float *)malloc(query_nb * dim * sizeof(float));
-  float *knn_dist_query = (float *)malloc(query_nb * k * sizeof(float));
-  int *knn_index_query = (int *)malloc(query_nb * k * sizeof(int));
   float *knn_dist_ref = (float *)malloc(ref_nb * k * sizeof(float));
   int *knn_index_ref = (int *)malloc(ref_nb * k * sizeof(int));
+  float *knn_dist_query = (float *)malloc(query_nb * k * sizeof(float));
+  int *knn_index_query = (int *)malloc(query_nb * k * sizeof(int));
 
   // Allocation checks
   if (!ref || !query || !knn_dist_query || !knn_index_query || !knn_dist_ref ||
