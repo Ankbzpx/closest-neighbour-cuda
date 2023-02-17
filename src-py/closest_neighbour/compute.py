@@ -10,7 +10,7 @@ def compute(ref_pts, query_pts):
         query_pts: m x d
     Returns:
         ref_to_query_closest_dist: distance from ref_pts to their closest neighbour in query_pts (n)
-        ref_closest_index: ref_pts' closest query index (n)
+        closest_query_index: ref_pts' closest query index (n)
         query_to_ref_closest_dist: distance from query_pts to their closest neighbour in ref_pts (m)
         closest_ref_index: query_pts' closest ref index (m)
     """
