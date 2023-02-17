@@ -335,7 +335,7 @@ py::list compute_closest_neighbour(py::array_t<float> ref_pts,
   return results_list;
 }
 
-PYBIND11_MODULE(closest_neighbour, m) {
+PYBIND11_MODULE(closest_neighbour_bind, m) {
   m.doc() =
       "Compute mutual closest neighbour between two point sets using cuda";
   m.def("compute", &compute_closest_neighbour,

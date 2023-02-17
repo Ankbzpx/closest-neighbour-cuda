@@ -17,7 +17,7 @@ set(HDR_DIR include)
 set(SRC_DIR src)
 
 # python lib
-set(CLOSEST_NEIGHBOUR_PYTHON_LIB closest_neighbour)
+set(CLOSEST_NEIGHBOUR_PYTHON_LIB closest_neighbour_bind)
 add_subdirectory(pybind11)
 pybind11_add_module(${CLOSEST_NEIGHBOUR_PYTHON_LIB} ${SRC_DIR}/closest_neighbour_cuda.cu)
 

@@ -13,7 +13,7 @@ def closest_neighbour_sp(ref_pts, query_pts):
     query_closest_index_sp = np.argmin(dist_mat, axis=0)
     query_closest_dist_sp = np.min(dist_mat, axis=0)
 
-    return ref_closest_dist_sp.astype(np.float32), ref_closest_index_sp.astype(np.int32), query_closest_dist_sp.astype(np.float32), query_closest_index_sp.astype(np.int32)
+    return ref_closest_dist_sp, ref_closest_index_sp, query_closest_dist_sp, query_closest_index_sp
 
 
 def test_main():
@@ -38,8 +38,7 @@ def test_main():
     for _ in range(test_iter):
         ref_pts = np.random.randn(ref_nb, 3)
         query_pts = np.random.randn(query_nb, 3)
-        closest_neighbour.compute(np.asfortranarray(
-            ref_pts), np.asfortranarray(query_pts))
+        closest_neighbour.compute(ref_pts, query_pts)
     print(f"CUDA time: {(time.time() - start_time) / test_iter}")
 
     ref_pts = np.random.randn(ref_nb, 3)
@@ -49,7 +48,7 @@ def test_main():
         ref_pts, query_pts)
 
     ref_closest_dist_cuda, ref_closest_index_cuda, query_closest_dist_cuda, query_closest_index_cuda = closest_neighbour.compute(
-        np.asfortranarray(ref_pts), np.asfortranarray(query_pts))
+        ref_pts, query_pts)
 
     closest_index_valid = (ref_closest_index_sp != ref_closest_index_cuda).sum(
     ) == 0 and (query_closest_index_sp != query_closest_index_cuda).sum() == 0

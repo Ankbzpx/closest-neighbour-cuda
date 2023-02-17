@@ -5,7 +5,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from setuptools import Extension, setup
+from setuptools import Extension, setup, find_packages
 from setuptools.command.build_ext import build_ext
 
 
@@ -49,7 +49,9 @@ setup(
     author="Ruichen Zheng",
     author_email="ankbzpx@hotmail.com",
     description="Compute closest neighbour using CUDA. Modified from https://github.com/vincentfpgarcia/kNN-CUDA",
-    ext_modules=[CMakeExtension("closest_neighbour")],
+    package_dir = {'': 'src-py'},
+    packages=find_packages(where="src-py"),
+    ext_modules=[CMakeExtension("closest_neighbour_bind")],
     cmdclass={"build_ext": CMakeBuild},
     zip_safe=False,
     extras_require={"test": ["pytest>=6.0"]},
