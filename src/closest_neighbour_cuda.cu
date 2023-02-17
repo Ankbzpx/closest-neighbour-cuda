@@ -139,7 +139,7 @@ __global__ void compute_closest_index(float *dist, int dist_pitch,
 
 // adapted from
 // https://github.com/vincentfpgarcia/kNN-CUDA/blob/master/code/knncuda.h#L14
-bool closest_cuda(const float *ref, int ref_nb, const float *query,
+void closest_cuda(const float *ref, int ref_nb, const float *query,
                   int query_nb, int dim, float *knn_dist_ref,
                   int *knn_index_ref, float *knn_dist_query,
                   int *knn_index_query) {
@@ -154,15 +154,13 @@ bool closest_cuda(const float *ref, int ref_nb, const float *query,
   int nb_devices;
   err0 = cudaGetDeviceCount(&nb_devices);
   if (err0 != cudaSuccess || nb_devices == 0) {
-    printf("ERROR: No CUDA device found\n");
-    return false;
+    throw std::runtime_error("ERROR: No CUDA device found\n");
   }
 
   // Select the first CUDA device as default
   err0 = cudaSetDevice(0);
   if (err0 != cudaSuccess) {
-    printf("ERROR: Cannot set the chosen CUDA device\n");
-    return false;
+    throw std::runtime_error("ERROR: Cannot set the chosen CUDA device\n");
   }
 
   // Allocate global memory
@@ -203,9 +201,8 @@ bool closest_cuda(const float *ref, int ref_nb, const float *query,
   if (err0 != cudaSuccess || err1 != cudaSuccess || err2 != cudaSuccess ||
       err3 != cudaSuccess || err4 != cudaSuccess || err5 != cudaSuccess ||
       err6 != cudaSuccess) {
-    printf("ERROR: Memory allocation error\n");
     free();
-    return false;
+    throw std::runtime_error("ERROR: Memory allocation error\n");
   }
 
   // Deduce pitch values
@@ -215,9 +212,8 @@ bool closest_cuda(const float *ref, int ref_nb, const float *query,
 
   // Check pitch values
   if (query_pitch != dist_pitch) {
-    printf("ERROR: Invalid pitch value\n");
     free();
-    return false;
+    throw std::runtime_error("ERROR: Invalid pitch value\n");
   }
 
   // Copy reference and query data from the host to the device
@@ -227,9 +223,9 @@ bool closest_cuda(const float *ref, int ref_nb, const float *query,
                       query_nb * size_of_float, query_nb * size_of_float, dim,
                       cudaMemcpyHostToDevice);
   if (err0 != cudaSuccess || err1 != cudaSuccess) {
-    printf("ERROR: Unable to copy data from host to device\n");
     free();
-    return false;
+    throw std::runtime_error(
+        "ERROR: Unable to copy data from host to device\n");
   }
 
   // Compute the squared Euclidean distances
@@ -240,9 +236,9 @@ bool closest_cuda(const float *ref, int ref_nb, const float *query,
   compute_distances<<<grid0, block0>>>(ref_dev, ref_nb, ref_pitch, query_dev,
                                        query_nb, query_pitch, dim, dist_dev);
   if (cudaGetLastError() != cudaSuccess) {
-    printf("ERROR: Unable to execute kernel\n");
     free();
-    return false;
+    throw std::runtime_error(
+        "ERROR: Unable to execute compute_distances kernel\n");
   }
 
   // Retrieve closest dist and index
@@ -253,9 +249,8 @@ bool closest_cuda(const float *ref, int ref_nb, const float *query,
       dist_dev, dist_pitch, closest_index_ref_dev, closest_dist_ref_dev,
       query_nb, ref_nb, false);
   if (cudaGetLastError() != cudaSuccess) {
-    printf("ERROR: Unable to execute kernel ref\n");
     free();
-    return false;
+    throw std::runtime_error("ERROR: Unable to execute closest_index kernel\n");
   }
 
   dim3 block_query(256, 1, 1);
@@ -265,9 +260,8 @@ bool closest_cuda(const float *ref, int ref_nb, const float *query,
       dist_dev, dist_pitch, closest_index_query_dev, closest_dist_query_dev,
       query_nb, ref_nb, true);
   if (cudaGetLastError() != cudaSuccess) {
-    printf("ERROR: Unable to execute kernel query\n");
     free();
-    return false;
+    throw std::runtime_error("ERROR: Unable to execute closest_index kernel\n");
   }
 
   // Copy the smallest distances / indexes from the device to the host
@@ -282,15 +276,13 @@ bool closest_cuda(const float *ref, int ref_nb, const float *query,
 
   if (err0 != cudaSuccess || err1 != cudaSuccess || err2 != cudaSuccess ||
       err3 != cudaSuccess) {
-    printf("ERROR: Unable to copy data from device to host\n");
     free();
-    return false;
+    throw std::runtime_error(
+        "ERROR: Unable to copy data from device to host\n");
   }
 
   // Memory clean-up
   free();
-
-  return true;
 }
 
 namespace py = pybind11;
@@ -314,11 +306,9 @@ py::list compute_closest_neighbour(py::array_t<float> ref_pts,
   float *closest_dist_query = (float *)malloc(query_nb * sizeof(float));
   int *closest_index_query = (int *)malloc(query_nb * sizeof(int));
 
-  if (!closest_cuda(ref_pts.data(), ref_nb, query_pts.data(), query_nb, dim,
-                    closest_dist_ref, closest_index_ref, closest_dist_query,
-                    closest_index_query)) {
-    throw std::runtime_error("Failed to compute closest neighbour");
-  }
+  closest_cuda(ref_pts.data(), ref_nb, query_pts.data(), query_nb, dim,
+               closest_dist_ref, closest_index_ref, closest_dist_query,
+               closest_index_query);
 
   py::list results_list;
 

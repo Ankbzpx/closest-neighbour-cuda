@@ -224,12 +224,8 @@ bool test(const float *ref, int ref_nb, const float *query, int query_nb,
 
   // Compute k-NN several times
   for (int i = 0; i < nb_iterations; ++i) {
-    if (!knn(ref, ref_nb, query, query_nb, dim, test_knn_dist_ref,
-             test_knn_index_ref, test_knn_dist_query, test_knn_index_query)) {
-      free(test_knn_dist_query);
-      free(test_knn_index_query);
-      return false;
-    }
+    knn(ref, ref_nb, query, query_nb, dim, test_knn_dist_ref,
+        test_knn_index_ref, test_knn_dist_query, test_knn_index_query)
   }
 
   // Stop timer
